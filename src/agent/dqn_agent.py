@@ -44,15 +44,26 @@ class DQNAgent:
             # Masked random action
             if mask is not None:
                 available = [i for i, m in enumerate(mask) if m]
-                return random.choice(available)
-            return random.randrange(self.action_dim)
+                if not available:
+                    raise ValueError("No available actions to select from (mask is empty)")
+                action = random.choice(available)
+                if action >= self.action_dim:
+                    raise ValueError(f"Selected action {action} is out of bounds for action_dim {self.action_dim}")
+                return action
+            action = random.randrange(self.action_dim)
+            return action
         state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         q_values = self.q_net(state)
         if mask is not None:
             q_values[0][[i for i, m in enumerate(mask) if not m]] = -float('inf')
-        return torch.argmax(q_values).item()
+        action = torch.argmax(q_values).item()
+        if action >= self.action_dim:
+            raise ValueError(f"Selected action {action} is out of bounds for action_dim {self.action_dim}")
+        return action
 
     def store(self, state, action, reward, next_state, done):
+        if action >= self.action_dim:
+            raise ValueError(f"Attempting to store out-of-bounds action {action} for action_dim {self.action_dim}")
         self.memory.append((state, action, reward, next_state, done))
 
 
