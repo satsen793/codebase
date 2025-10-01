@@ -2,6 +2,8 @@
 # Full training loop for DQN agent across 4 environments
 import numpy as np
 import csv
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from agent.dqn_agent import DQNAgent
 from agent.state_encoder import StateEncoder
 from agent.joint_action_space import JointActionSpace
