@@ -201,9 +201,9 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
             state = next_state
             if done:
                 break
-        agent.update_target()
-        results_log.append([env_id, ep, total_reward])
-        print(f"Env: {env_id}, Episode: {ep}, Total Reward: {total_reward}")
+    agent.update_target()
+    results_log.append([env_id, ep, total_reward])
+    print(f"Env: {env_id}, Episode: {ep}, Total Reward: {total_reward}")
 
 # Log results to CSV
 with open('csv/dqn_results.csv', 'w', newline='') as f:
