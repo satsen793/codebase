@@ -221,9 +221,13 @@ with open('csv/rl_interventions.csv', 'w', newline='') as f:
 print("Intervention events saved to csv/rl_interventions.csv")
 
 # Log detailed student trajectories to CSV
+import os
+csv_path = os.path.abspath('csv/rl_student_trajectories.csv')
 print(f"Trajectory log length before writing CSV: {len(trajectory_log)}")
-with open('csv/rl_student_trajectories.csv', 'w', newline='') as f:
+with open(csv_path, 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(trajectory_log_header)
     writer.writerows(trajectory_log)
-print("Detailed trajectories saved to csv/rl_student_trajectories.csv")
+    f.flush()
+    os.fsync(f.fileno())
+    print(f"Detailed trajectories saved to {csv_path}")
