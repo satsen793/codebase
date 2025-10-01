@@ -197,6 +197,7 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
                 done,
                 info
             ])
+            print(f"Trajectory log length after append: {len(trajectory_log)}")
             total_reward += shaped_reward
             state = next_state
             if done:
@@ -220,6 +221,7 @@ with open('csv/rl_interventions.csv', 'w', newline='') as f:
 print("Intervention events saved to csv/rl_interventions.csv")
 
 # Log detailed student trajectories to CSV
+print(f"Trajectory log length before writing CSV: {len(trajectory_log)}")
 with open('csv/rl_student_trajectories.csv', 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(trajectory_log_header)
