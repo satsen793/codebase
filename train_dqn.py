@@ -1,3 +1,6 @@
+# Add src to sys.path for module resolution
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 # train_dqn.py
 # Full training loop for DQN agent across 4 environments
 import numpy as np
