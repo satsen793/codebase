@@ -98,21 +98,20 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
                 'jump_vel': 0,
                 'context': np.zeros(encoder.context_dim)
             })
-            # Masking (context-aware, but using fixed joint_space)
-            # Get available jump and content actions for this step
-            available_jump_actions = env.available_jump_actions()
-            available_content_actions = env.available_content_actions()
-            # Build jump/content masks (1 if available, 0 if not)
+            # Build jump/content actions and joint space per step
+            jump_actions = env.available_jump_actions()
+            content_actions = env.available_content_actions()
+            joint_space = JointActionSpace(jump_actions, content_actions)
             # Build jump/content masks as dicts: action -> 1/0
-            jump_mask = {j: int(j in available_jump_actions) for j in jump_actions}
-            content_mask = {c: int(c in available_content_actions) for c in content_actions}
-            # Use joint_space.mask to get the mask for the joint action space
+            jump_mask = {j: int(j in jump_actions) for j in jump_actions}
+            content_mask = {c: int(c in content_actions) for c in content_actions}
             mask = joint_space.mask(jump_mask, content_mask)
             # Select action
             action_idx = agent.select_action(state_vec, mask=mask)
             jump_action, content_action = joint_space.get_action(action_idx)
             # Step
             next_state, reward, done, info = env.step(jump_action, content_action)
+            print(f"Step: {step}, Done: {done}")
             # Intervention hooks
             # 1. Repeated failures (e.g., 8 mistakes)
             correct = info.get('correct', reward > 0)
