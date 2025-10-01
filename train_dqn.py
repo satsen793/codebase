@@ -103,8 +103,9 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
             available_jump_actions = env.available_jump_actions()
             available_content_actions = env.available_content_actions()
             # Build jump/content masks (1 if available, 0 if not)
-            jump_mask = [(j in available_jump_actions) for j in joint_space.action_pairs[0][0:len(jump_actions)]]
-            content_mask = [(c in available_content_actions) for c in joint_space.action_pairs[0][1:len(content_actions)]]
+            # Build jump/content masks as dicts: action -> 1/0
+            jump_mask = {j: int(j in available_jump_actions) for j in jump_actions}
+            content_mask = {c: int(c in available_content_actions) for c in content_actions}
             # Use joint_space.mask to get the mask for the joint action space
             mask = joint_space.mask(jump_mask, content_mask)
             # Select action
