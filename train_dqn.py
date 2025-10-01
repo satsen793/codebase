@@ -38,7 +38,21 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
     jump_actions = env.available_jump_actions()
     content_actions = env.available_content_actions()
     joint_space = JointActionSpace(jump_actions, content_actions)
-    agent = DQNAgent(state_dim=encoder.L, action_dim=joint_space.size())
+    # Get true state vector size from a sample state
+    sample_state = env.reset()
+    sample_state_vec = encoder.encode({
+        'mastery_vec': np.zeros(encoder.L),
+        'mastery_vel': np.zeros(3*encoder.L),
+        'latents': np.zeros(7),
+        'uncertainty': np.zeros(7),
+        'error_embed': np.zeros(32),
+        'hist_embed': np.zeros(64),
+        'curriculum_pos': [0],
+        'unlocks': np.zeros(encoder.L),
+        'jump_vel': 0,
+        'context': np.zeros(6)
+    })
+    agent = DQNAgent(state_dim=sample_state_vec.shape[0], action_dim=joint_space.size())
     teacher = RewardModel()
 
     for ep in range(num_episodes):
