@@ -21,6 +21,9 @@ class QNetwork(nn.Module):
         return self.net(x)
 
 class DQNAgent:
+    def update_target(self):
+        """Copy weights from q_net to target_net."""
+        self.target_net.load_state_dict(self.q_net.state_dict())
     def __init__(self, state_dim, action_dim, lr=1e-3, gamma=0.99, epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.995, buffer_size=10000, batch_size=64):
         self.state_dim = state_dim
         self.action_dim = action_dim
