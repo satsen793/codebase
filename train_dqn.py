@@ -7,7 +7,7 @@ import numpy as np
 import csv
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from agent.dqn_agent import DQNAgent
+from agent.dqn_agent import TwoHeadDQNAgent
 from agent.state_encoder import StateEncoder
 from agent.joint_action_space import JointActionSpace
 from env.rl_environment import RLEnvironment
@@ -60,7 +60,11 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
         'jump_vel': 0,
         'context': np.zeros(6)
     })
-    agent = DQNAgent(state_dim=sample_state_vec.shape[0], action_dim=joint_space.size())
+    agent = TwoHeadDQNAgent(
+        state_dim=sample_state_vec.shape[0],
+        jump_dim=len(jump_actions),
+        content_dim=len(content_actions)
+    )
     teacher = RewardModel()
 
     for ep in range(num_episodes):
@@ -102,13 +106,14 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
             jump_actions = env.available_jump_actions()
             content_actions = env.available_content_actions()
             joint_space = JointActionSpace(jump_actions, content_actions)
-            # Build jump/content masks as dicts: action -> 1/0
-            jump_mask = {j: int(j in jump_actions) for j in jump_actions}
-            content_mask = {c: int(c in content_actions) for c in content_actions}
-            mask = joint_space.mask(jump_mask, content_mask)
-            # Select action
-            action_idx = agent.select_action(state_vec, mask=mask)
-            jump_action, content_action = joint_space.get_action(action_idx)
+            # Build jump/content masks as lists for each head
+            jump_mask = [int(j in jump_actions) for j in jump_actions]
+            content_mask = [int(c in content_actions) for c in content_actions]
+            # Select actions using two-head agent
+            jump_idx = agent.select_jump_action(state_vec, mask=jump_mask)
+            content_idx = agent.select_content_action(state_vec, mask=content_mask)
+            jump_action = jump_actions[jump_idx]
+            content_action = content_actions[content_idx]
             # Step
             next_state, reward, done, info = env.step(jump_action, content_action)
             print(f"Step: {step}, Done: {done}")
@@ -180,7 +185,7 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
                 'jump_vel': 0,
                 'context': np.zeros(encoder.context_dim)
             })
-            agent.store(state_vec, action_idx, shaped_reward, next_state_vec, done)
+            agent.store(state_vec, jump_idx, content_idx, shaped_reward, next_state_vec, done)
             agent.update()
             # Log trajectory step before break
             trajectory_log.append([
@@ -189,7 +194,7 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
                 step,
                 student_id,
                 state_vec.tolist(),
-                action_idx,
+                f"jump:{jump_idx}|content:{content_idx}",
                 jump_action,
                 content_action,
                 shaped_reward,
