@@ -1,0 +1,5 @@
+env_id,theta_alpha,phi,s,g,tau,h
+SchoolA,"Beta(5,3)","Beta(2,8)","Uniform(0,0.1)","Uniform(0,0.1)","Uniform(0.5,1.0)","Uniform(0,0.5)"
+SchoolB,"Beta(2,5)","Beta(3,7)","Uniform(0,0.2)","Uniform(0,0.2)","Uniform(1.0,1.5)","Uniform(0.2,0.7)"
+SchoolC,"Beta(6,2)","Beta(1,5)","Uniform(0,0.15)","Uniform(0,0.15)","Uniform(0.7,1.2)","Uniform(0.1,0.6)"
+SchoolD,"Beta(4,4)","Beta(2,6)","Uniform(0,0.05)","Uniform(0,0.05)","Uniform(1.2,2.0)","Uniform(0.3,0.9)"

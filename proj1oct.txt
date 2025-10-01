@@ -1,0 +1,1429 @@
+﻿heir performance on a small set of mixed questions, thereby providing a truly personalized 
+learning path even in real-life deployment.​
+ 
+
+Human-in-the-Loop Integration with a Synthetic Teacher 
+
+While our system would be  initially developed and evaluated entirely in a synthetic setting, the 
+long-term goal is to support hybrid reward modeling, where real human teachers interact 
+alongside the synthetic teacher to guide the reinforcement learning agent. 
+
+In the purely synthetic configuration, the agent interacts with simulated students and receives 
+feedback from a synthetic teacher.Overview of what we are going to build . ​
+​
+Problem Statement 
+
+Most learning management systems (LMS) collect student performance data across various 
+assessments and maintain mappings between teaching content and corresponding learning 
+outcomes . These systems typically present performance in a standardized format, often as a 
+consolidated score visible in the interface. Instructors rely on these scores to evaluate students’ 
+overall understanding of a topic or concept. 
+
+However, these systems fall short in several critical ways: 
+
+1.​ They do not provide insight into the specific concepts or learning outcomes where 
+students are struggling.​
+ 
+
+2.​ Existing adaptive learning systems often provide generic, rule-based feedback, lacking 
+true personalization based on a student’s latent abilities, learning rate, engagement, and 
+other cognitive factors.​
+ 
+
+3.​ There is limited capability to simulate student behavior or predict responses to new 
+questions, which hinders  interventions.​
+ 
+
+Novelty of the proposed system: 
+
+Unlike conventional LMS or adaptive platforms, our system models students as stochastic 
+agents with latent parameters . It uses a synthetic yet realistic student population, allowing 
+training of reinforcement learning (RL) agents that learn personalized recommendation policies. 
+
+​
+The system incorporates a synthetic teacher to guide policy learning (RLHF-style feedback), 
+enabling a strong reward structure that balances mastery improvement and tutor like 
+alignment.By integrating topic- and learning-outcome-level granularity, multiple difficulty levels, 
+
+
+
+and a dense question bank, the model can identify precise conceptual gaps and recommend 
+content tailored to individual learning trajectories. 
+
+In the proposed system, each topic is decomposed into multiple learning outcomes (LOs). Each 
+LO contains a set of questions stratified across several difficulty levels. Traditionally, a student 
+must attempt all questions under a given LO to achieve mastery.However, our system 
+introduces adaptive completion criteria,Students with higher latent ability may achieve mastery 
+after attempting only a subset of questions within an LO (e.g., a “genius” student might master 
+an LO after solving 12 carefully selected questions out of 100).Students with moderate ability 
+may require more attempts  to reach mastery.The adaptive mechanism dynamically determines 
+the number and difficulty of questions presented based on observed performance, engagement, 
+and inferred latent parameters.This structure allows the system to provide personalized learning 
+trajectories, ensuring that students spend just enough time on each LO to achieve mastery 
+without unnecessary repetition, while still capturing enough data to accurately estimate their 
+latent abilities and learning needs. 
+
+The system is capable of estimating latent parameters for new, unseen students after observing 
+t The synthetic teacher encodes pedagogical heuristics (e.g., rewarding mastery of harder 
+questions, penalizing excessive hint use, flagging repeated failures) and provides dense, 
+reproducible reward signals. 
+
+However, when moving toward real-world deployment, we propose a human-in-the-loop 
+extension in which human teachers augment or override the synthetic teacher’s judgments. This 
+can occur at two distinct levels: 
+
+Reward-Model Augmentation.​
+Human teachers provide preference annotations or corrective feedback on selected student 
+trajectories. These labels are combined with synthetic labels to train or fine-tune a reward 
+model. In practice, the synthetic teacher supplies abundant baseline feedback, while the human 
+input serves as a high-quality corrective signal. This mirrors the paradigm of Reinforcement 
+Learning from Human Feedback (RLHF), where a reward model is initially bootstrapped with 
+weak/synthetic signals and subsequently refined using human preferences.​
+ 
+
+Direct Environment Interaction.​
+ In live classroom settings, real students interact with the agent. The synthetic teacher continues 
+to supply default rewards, but human instructors intervene when the system encounters 
+ambiguous, unsafe, or pedagogically sensitive states (e.g., repeated student failures or 
+inappropriate content recommendations). Such interventions are logged and incorporated into 
+the training dataset, allowing the agent to gradually align with human pedagogical intent while 
+maintaining the scalability of synthetic supervision. 
+
+ 
+
+ 
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Mapping to RL Diagram: 
+
+State    / (s) = Student representation.​
+Policy   / (πθ) = RL agent (recommendation system).​
+Action  /  (a) = Selection of next question or study material.​
+Environment / p(s′∣s,a) = Student simulators (four unique schools).​
+Reward /  (r) = Teacher feedback (synthetic).​
+ 
+
+Questionnaire (Fixed).​
+The questionnaire, consisting of math word problems {(MWPs)(directed acyclic graph )}, 
+questions at graded difficulty levels, and reference study materials, defines the action space. 
+The agent can select from this fixed pool of questions and content when deciding on the next 
+action.​
+ 
+
+Environments (Four Unique Simulators).​
+We start with four distinct environments, each representing a “school” with 1,000 students. 
+While all environments share the same questionnaire and curriculum graph, they differ in the 
+distributions of latent student parameters. This ensures diversity in training and provides a basis 
+for out-of-distribution (OOD) testing {Out-of-Distribution (OOD) detection refers to a model's ability 
+to recognize and appropriately handle data that deviates significantly from its training set} 
+
+ Formally, each environment specifies the transition dynamics p(s′∣s,a) governing how student 
+states evolve after interventions.​
+ 
+
+
+
+RL Agent.​
+The agent corresponds to the policy network πθ(a∣s). Given the current student state vector , 
+the agent selects an action: either posing a question at a given difficulty or recommending study 
+material. The policy parameters θ are shared across all environments; rollouts from the different 
+environments are aggregated to update a single unified agent.​
+ 
+
+Teacher (Reward Model).​
+Unlike standard RL where rewards are intrinsic to the environment, here we employ a synthetic 
+teacher model to evaluate the quality of actions. The teacher assigns shaped rewards based on 
+correctness, difficulty, hint usage, slip/guess behavior, and escalation rules (e.g., flagging 
+repeated failures). This teacher can also generate preference pairs for reward-model training, 
+enabling RLHF-style fine-tuning. In future real-world deployment, the synthetic teacher may be 
+hybridized with human instructors, allowing human feedback to complement and override 
+synthetic signals. 
+
+ 
+
+ 
+
+the Knowledge Base (KB) : 
+
+●​ A two-policy RL agent (Jump + Content) trained on 4 synthetic school 
+environments (10k students each). 
+
+●​ A synthetic teacher providing RLHF-style reward shaping for both policies. 
+●​ A questionnaire of 200 topics × 10 LOs × 4 difficulties × 8 questions = 64,000 
+
+items, structured as a directed acyclic graph (DAG) of prerequisites (not cyclic). 
+●​ Adaptive mastery: high-ability students master LOs with fewer items. 
+●​ Human-in-the-loop: instructor flagged after 8 mistakes (not 3). 
+●​ Synthetic-to-real transfer: real open-source content mapped to the same 
+
+topic→LO graph. 
+●​ Latent student model: with parameters θ, α, ϕ, s, g, τ, h. 
+●​ Reward: R_total = R_student + α·R_teacher_jump + β·R_teacher_content. 
+●​ Action space: discrete jump actions (stay, goto(ℓ), revisit(ℓ), etc.) + 
+
+content/meta-actions. 
+●​ Training: Masked Deep Q / PPO with shared state encoder 
+
+CREATING QUESTIONNAIRE AND ENVIRONMENTS​
+ 
+QUESTIONNAIRE ​
+this has mwps ( 200 topics * 10 learning outcomes * 4 levels of difficulties * 8 questions under 
+each difficulty) there exists directed cyclic graph ( vertices are topics and learning outcomes ) 
+which represents how each topic would unlock( note :- to unlock topic 3 , you need not complete 
+
+
+
+all Los of topic 2 some may be enough, connect those LO nodes to the topic 3 node ) , this also  
+has something like ( while learning outcome 4 , 5 would unlock topic 3 , but to attempt them a 
+student should be done with lo 1 , 2 ) and so on , and for difficulty under a lo it should go like  
+difficulty_level1 then difficulty_level2 then difficulty_level3 and so on .  
+ 
+
+Simulated unlock logic: Write down rules:  to attempt LO Y, must have ≥80% mastery in LO X 
+.Handle cycles clearly , (optional vs required paths). 
+
+ 
+ 
+ENVIRONMENTS ​
+total 4 envs , each one is unique , each has 10k students , ​
+latent parameters ​
+Action Space: 𝒜 = 𝒜_jump × 𝒜_content 
+
+The agent selects a joint action a = (a_jump, a_content), executed hierarchically: 
+
+1.​ Jump Policy selects a target LO (or special action). 
+2.​ Content Policy selects a resource within that LO (or meta-action). 
+
+Both are discrete, masked, and context-aware. 
+
+ 
+
+I. Jump Action Space — 𝒜_jump 
+
+𝒜_jump = { stay, backtrack, revisit(ℓ), goto(ℓ), group_work(ℓ), NULL } 
+
+Where: 
+
+action symbol conditions/semantics 
+
+Stay j = 0 Remain in current LOℓ_current. Always allowed. 
+
+
+
+Backtr j = 
+Move to immediate prerequisite LO (DAG parent). Allowed if ` 
+
+ack −1 
+
+j = 
+Jump toany previously mastered LOℓwherem [ℓ] < 0.7andΔT > 
+
+Revisit revis
+1 day. Enablesspaced repetition. 
+
+it(ℓ) 
+
+j = 
+Jump toany unlocked LOℓ ∈ 𝒱_unlocked(s ) \ 
+
+Goto goto(
+{ℓ_current}.Not index-based— usesDAG topology. 
+
+ℓ) 
+
+j = 
+Group Assign collaborative task on LOℓ(requiresℓunlocked). Triggers special 
+
+group
+Work content type (see below). 
+
+(ℓ) 
+
+j = Pause session (break, motivational message). No content 
+NULL 
+
+NULL recommended. 
+
+Key Constraints (Action Masking): 
+
+●​ Unlocking: ℓ ∈ 𝒱_unlocked(s ) iff Φ_ℓ({m [ℓ′] ≥ τ}) = True (supports 
+OR/AND). 
+
+●​ Confidence Safety: Mask goto(ℓ) if any prerequisite ℓ′ has H(m [ℓ′]) > ε (high 
+uncertainty). 
+
+●​ Cold-Start: For t < 10, restrict to {stay, backtrack} only. 
+●​ Velocity Limit: If |v | > v_max, mask all goto with |ΔLO| > 1. 
+
+ 
+
+ 
+
+II. Content Action Space — 𝒜_content(ℓ, j) 
+
+
+
+𝒜_content = { r ∈ ℛ_ℓ } ∪ { meta ∈ ℳ } 
+
+Where: 
+
+●​ ℛ_ℓ = real or synthetic resources mapped to LO ℓ. 
+●​ ℳ = pedagogical meta-actions (not tied to specific items). 
+
+A. Resource Types (ℛ_ℓ) 
+
+Each resource r is tagged with: 
+
+●​ Modality: mod(r) ∈ {problem, video, reading, simulation} 
+●​ Type: type(r) ∈ {diagnostic, practice, review} 
+●​ IRT Difficulty: b_r (used to compute δ(r,i) = b_r − θ̂ᵢ) 
+●​ Duration: τ(r) ∈ ℝ⁺ (minutes) 
+●​ Availability: avail(r) ∈ {0,1} (from LMS) 
+
+B. Meta-Actions (ℳ) 
+
+First-class pedagogical strategies: 
+
+Meta action effect 
+
+hint Provide hint for current problem 
+
+worked_example Show step-by-step solution 
+
+self_explain_prompt Ask student to explain reasoning 
+
+discussion_prompt Trigger peer discussion (used withgroup(ℓ)) 
+
+
+
+ 
+
+Action Masking for Content: 
+
+●​ Availability Mask: A  = { r : avail(r) = 1 } 
+●​ Cold-Start Mask: If t < 10, restrict to ℛ_probe ⊂ ℛ_ℓ (8–12 diagnostic items 
+
+spanning difficulties). 
+●​ Modality Smoothing: Not masked, but reward penalizes 1[mod(r ) ≠ 
+
+mod(r ₋₁)]. 
+
+ 
+
+III. Full Action Execution Protocol 
+
+At step t: 
+
+1.​ Compute state s  → encode z  = ϕ(s ) 
+
+2.​ Generate jump mask M_jump based on: 
+
+●​ DAG unlock status 
+
+●​ Mastery uncertainty H(m ) 
+
+●​ Jump velocity v  
+
+●​ Session step t 
+
+3.​ Sample jump action: a_jump ~ π_jump(· | z ) ⊙ M_jump 
+
+4.​ If a_jump = NULL: End session. No content. 
+
+5.​ Else: Determine target LO ℓ* 
+
+6.​ Generate content mask M_content based on: 
+
+●​ Resource availability 
+
+●​ Cold-start status 
+
+7.​ Sample content: a_content ~ π_content(· | z , ℓ*) ⊙ M_content 
+
+8.​ If a student repeatedly makes 8 mistakes in solving the questionnaire, flag it to 
+
+the instructor. 
+
+
+
+9.​ Deliver: Serve real resource or meta-action 
+
+10.​Observe: (y, RT, hint, mod, type, τ, avail_next, ...) → update state 
+
+ 
+
+ 
+
+IV. Action Space Properties 
+
+  
+
+Granularity DAG-relative (not index-based) 
+
+Pedagogical Richness Includes meta-actions, group work, review 
+
+Safety Confidence-aware masking, velocity limits 
+
+Realism Availability masking, modality costs 
+
+Adaptivity Cold-start constraints, relative difficulty 
+
+Scalability Discrete actions → compatible with PPO, DQN 
+
+Synthetic-to-Real Invariant Action semantics unchanged; only backing content differs 
+
+ 
+
+V. Summary of Pitfall Coverage 
+
+
+
+  
+
+1. Fixed jump granularity goto(ℓ)over DAG, not index 
+
+2. Modality switching cost Reward penalty +mod(r ₋₁)in state 
+
+3. No review revisit(ℓ)action 
+
+4. No meta-actions ℳ = {hint, worked_example, ...} 
+
+5. Availability ignored avail(r)mask 
+
+6. Uncalibrated difficulty δ(r,i)in state (not action) 
+
+7. No diagnostic/practice type(r)tagging + reward shaping 
+
+8. Ignores confidence Mask ifH(m) > ε 
+
+9. No collaboration group(ℓ)+discussion_prompt 
+
+10. Cold-start fragility Constrained probe set fort < 10 
+
+
+
+​
+​
+1. Pitfall: Fixed Jump Granularity Fails to Capture Curriculum Nuance 
+
+Problem: Discrete jumps like {−1, 0, +1, +2} assume uniform LO spacing, but real 
+
+curricula have variable semantic distances (e.g., skipping from “linear equations” to 
+
+“quadratics” vs. “quadratics” to “conics”).​
+
+Mitigation: Define jump actions relative to DAG topology, not index offsets. Action = 
+
+“jump to any unlocked LO”, with embedding-based similarity (e.g., LO embeddings) to 
+
+regularize policy. 
+
+ 
+
+2. Pitfall: Content Action Space Ignores Modality Switching Costs 
+
+Problem: Switching from video → problem → reading incurs cognitive load and 
+
+engagement drop, but the agent treats all transitions equally.​
+
+Mitigation: Add modality transition penalty to reward:​
+
+r ← r − λ ⋅ 1[mod(r ) ≠ mod(r ₋₁)].​
+
+Include mod(r ₋₁) in state so policy learns smooth sequences. 
+
+ 
+
+3. Pitfall: No Action for “Review” or “Spiral Re-encounter” 
+
+Problem: The system can backtrack (−1), but cannot revisit mastered LOs for spaced 
+
+repetition — critical for long-term retention.​
+
+Mitigation: Extend Jump Policy to allow positive jumps to previously mastered LOs (e.g., 
+
+j = revisit(ℓ)), triggered by decay (m [ℓ] < 0.7 after ΔT). 
+
+ 
+
+4. Pitfall: Resource Pool Lacks “Meta-Actions” (e.g., Hint, Explanation) 
+
+
+
+Problem: Recommending a problem is not enough; sometimes the best action is “show 
+
+worked example” or “request self-explanation” — but these aren’t in 𝒜_content.​
+
+Mitigation: Treat pedagogical strategies as first-class actions:​
+
+𝒜_content = {problem, video, hint, worked_example, self_explain_prompt}. 
+
+ 
+
+5. Pitfall: Action Space Assumes Deterministic Resource Availability 
+
+Problem: In real schools, not all resources are available (e.g., video blocked, worksheet 
+
+not printed). Agent recommends inaccessible items → trust erosion.​
+
+Mitigation: Include availability mask A  ⊂ 𝒜_content from LMS. Use masked policy 
+
+head (standard in PPO). 
+
+ 
+
+6. Pitfall: Difficulty Levels Are Not Calibrated Across LOs 
+
+Problem: “Difficulty 3” in LO₁ ≠ “Difficulty 3” in LO₂. Agent learns spurious difficulty 
+
+preferences.​
+
+Mitigation: Replace absolute difficulty with IRT-based relative difficulty δ(r,i) = b_r − 
+
+θ̂ᵢ (as in your KB). Make this a state feature, not action metadata. 
+
+ 
+
+7. Pitfall: No “Diagnostic” vs “Practice” Action Typing 
+
+Problem: The agent cannot distinguish between assessing mastery (diagnostic) and 
+
+building mastery (practice). It may over-assess or under-assess.​
+
+Mitigation: Tag each resource with type ∈ {diagnostic, practice, review}. Add type 
+
+balance constraint to teacher reward (e.g., penalize >3 practice in a row without 
+
+diagnostic). 
+
+ 
+
+
+
+8. Pitfall: Jump Actions Ignore Prerequisite Confidence 
+
+Problem: Agent jumps to LO₄ if m₂ ≥ 0.8, but if H(m₂) is high (uncertain), the jump is 
+
+risky.​
+
+Mitigation: Include mastery entropy in jump decision. Mask jumps if H(mₗ) > ε for any 
+
+prerequisite ℓ. 
+
+ 
+
+9. Pitfall: Action Space Lacks “Group” or “Collaborative” Options 
+
+Problem: Real classrooms use peer learning, but action space is purely individual. 
+
+Misses high-leverage pedagogical actions.​
+
+Mitigation: Add collaborative actions: j = assign_group_work(LO), r = 
+
+discussion_prompt. Requires multi-agent state, but can be approximated via 
+
+engagement signals. 
+
+ 
+
+10. Pitfall: No Graceful Degradation for Cold-Start Students 
+
+Problem: For new students, latent θ̂ᵢ is uncertain → relative difficulty δ(r,i) is noisy → 
+
+Content Policy recommends erratic items.​
+
+Mitigation: In cold-start phase (t < 10), constrain 𝒜_content to diagnostic probe set 
+
+(8–12 diverse items). Use curriculum-guided exploration, not policy. 
+
+ 
+ 
+
+I. State Space: 𝒮 — Comprehensive Student Representation 
+
+s  = [ m  ; Δm  ; ψ̂ᵢ(t) ; H(ψᵢ|D₁: ) ; e  ; h  ; c  ; v  ; x  ] ∈ 𝒮 ⊂ ℝᴺ 
+
+
+
+Each component is defined below with mathematical precision and pedagogical 
+
+justification. 
+
+ 
+
+1. Mastery Vector — m  ∈ [0,1]ᴸ 
+
+(Unchanged, but now complemented by velocity) 
+
+●​ m  = [mᵢ,₁(t), ..., mᵢ,ₗ(t)]ᵀ 
+
+●​ Estimated mastery per LO. 
+
+ 
+
+2. Mastery Velocity — Δm  ∈ ℝ³ᴸ  
+
+Definition:​
+Δm  = [ Δm⁽¹⁾  ; Δm⁽³⁾  ; Δm⁽⁵⁾  ]​
+
+where Δm⁽ᵏ⁾  = m  − m ₋ₖ for k ∈ {1, 3, 5} 
+
+●​ Purpose: Captures recent learning dynamics (credit assignment).{The credit 
+
+assignment problem in Reinforcement Learning (RL) is the challenge of 
+
+determining which past actions, out of a sequence, are responsible for a delayed 
+
+reward or outcome} 
+
+●​ Dimension: 3L 
+
+ 
+
+3. Latent Parameter Vector — ψ̂ᵢ(t) ∈ ℝ⁷ 
+
+ 
+
+
+
+●​ ψ̂ᵢ = [θᵢ, αᵢ, φᵢ, sᵢ, gᵢ, τᵢ, hᵢ] 
+
+●​ Estimated via recursive MAP / particle filter. 
+
+ 
+
+4. Latent Uncertainty — H(ψᵢ|D₁: ) ∈ ℝ⁷ 
+
+●​ Posterior entropy or log-variance for each latent. 
+
+●​ Enables uncertainty-aware exploration. 
+
+ 
+
+5. Error-Type Embedding — e  ∈ ℝᵏ 
+
+●​ Definition:​
+
+Encode last K_error responses as:​
+
+e  = Embed([ (y ₋ⱼ, c ₋ⱼ) ]ⱼ₌₀ᴷᵉʳʳᵒʳ⁻¹ )​
+
+where: 
+
+●​ y ∈ {0,1} = correctness 
+
+●​ c ∈ {0,1,2,3} = error category:​
+
+0=correct, 1=conceptual, 2=arithmetic, 3=guess/misread 
+
+●​ For MCQs: Map distractor choice → misconception via lookup table. 
+
+●​ Implementation: Small embedding layer (e.g., 8-dim per step) + GRU → k=32. 
+
+ 
+
+6. Interaction History Embedding — h  ∈ ℝᵈ 
+
+●​ Encodes (action, reward, RT, hint, item_id, LO, d) over last K steps. 
+
+●​ Now excludes error type (handled by e ). 
+
+
+
+ 
+
+7. Curriculum Position & Unlock State — c  ∈ ℕ × {0,1}ᴸ 
+
+●​ c  = (ℓ_current, u ) 
+
+●​ u [ℓ] = 1 ⇔ Φ_ℓ( {mᵢ,ℓ' ≥ τ_ℓ'}_{ℓ'∈Pa(ℓ)} ) = True 
+
+●​ Supports OR/AND prerequisites over DAG. 
+
+ 
+
+8. Jump Velocity — v  ∈ ℝ  
+
+●​ Definition:​
+v  = (1/W) ⋅ Σ_{k=t−W}^{t−1} jₖ​
+
+where jₖ = jump action at step k, W=5 (window size). 
+
+●​ Use: 
+
+●​ Input to teacher reward: R_teacher_jump ← R_teacher_jump − λ ⋅ 
+
+max(0, |v | − v_max) 
+
+●​ Enforce action masking: if mᵢ,ℓ(t) < 0.9, then j ∈ {−1, 0, +1} only. 
+
+ 
+
+9. Contextual & Dynamic Features — x  ∈ ℝᶜ  
+
+SYMBO
+FEATURE L DEFINITON 
+
+Session step t_step Integer step index in current session 
+
+
+
+Time since last session ΔT In days 
+
+Dynamic engagement η  η  = exp(−κ̂ᵢ ⋅ t_step 
+
+Estimated fatigue τ ̃ τ ̃ = τᵢ ⋅ min(1, t_step / T_max) 
+
+Time of day tod [sin(2πh/24), cos(2πh/24)] 
+
+Action duration proxy τ̄  Expected duration of last action 
+
+●​ κ̂ᵢ: Student-specific decay rate, updated online via regression on RT/hint trends. 
+
+●​ τ̄ : Scalar = τ(r ₋₁) (duration of last recommended resource). 
+
+📌 Note: Static ηᵢ is removed; replaced by dynamic η . 
+
+ 
+
+II. Full State Dimensionality 
+
+COMPONENT DIM 
+
+m  L 
+
+Δm  3L 
+
+
+
+ψ̂ᵢ 7 
+
+H(ψᵢ) 7 
+
+e  32 
+
+h  64 
+
+c  1 + L 
+
+v  1 
+
+x  6 
+
+Total N 5L + 118 
+
+●​ For L = 200 → N = 1118 
+
+●​ Still tractable with modern MLPs (e.g., 2–3 hidden layers of 1024 units). 
+
+ 
+
+III. Integration with Action Space & Policies 
+
+Jump Policy Input: 
+
+
+
+z  = ϕ(s ) → outputs distribution over: 
+
+𝒜_jump = { −1, 0, +1, +2, ..., +J_max, NULL }  
+
+●​ NULL = pause/break action. 
+
+●​ Masked by u  and v -based safety. 
+
+Content Policy Input: 
+
+z  + relative difficulty δ(r,i) + duration τ(r) → outputs over ℛ_ℓ 
+
+δ(r,i) = clip( (b_r − θ̂ᵢ) / σ_b , −2, 2 )  
+
+●​ b_r: IRT difficulty of resource r (pre-calibrated or online-estimated). 
+
+●​ τ(r): Estimated duration (minutes) → used in time-normalized reward.​
+
+​
+
+ 
+
+ 
+
+ 
+
+ 
+
+The Agent’s Two Policy Heads 
+We propose a system in which a single agent is equipped with two decision-making heads 
+(policies), both of which are jointly trained using the same state encoder. This structure allows 
+the agent to optimize both curriculum progression and resource selection, addressing two 
+essential components of adaptive learning systems. 
+
+Jump Policy (π_jump) 
+
+
+
+The Jump Policy determines when and how much to promote or demote the learner across 
+Learning Objectives (LOs). The action space can be either discrete or continuous: 
+
+●​ Discrete Action Space: stay in the current LO, skip +1 LO, skip +2 LOs, or backtrack 
+−1 LO.​
+ 
+
+●​ Continuous Action Space: select a jump size j∈[−k,+k] 
+
+The primary purpose of this policy is to manage progression through the curriculum, balancing 
+efficiency (faster mastery), safety (avoiding premature promotions), and retention. 
+
+Content Policy (π_content) 
+
+The Content Policy selects an appropriate resource from a pool aligned to the current LO. 
+Unlike synthetic questionnaire items used for training and benchmarking, this pool is composed 
+of heterogeneous real-world materials: 
+
+●​ Questions and problem sets (from textbooks or the internet).​
+ 
+
+●​ Worked examples and practice worksheets.​
+ 
+
+●​ Videos, readings, and interactive simulations.​
+ 
+
+The action space can be stratified by difficulty, modality (e.g., video vs. problem-solving), length, 
+or interactivity. The goal is to recommend a pedagogically appropriate resource at each step. 
+Rewards for this policy are shaped by correctness (if applicable), engagement proxies 
+(response time, hints, completion), and mastery gain. 
+
+Shared State Encoder 
+
+Both policies share a common state encoder that produces a compact representation of the 
+learner’s state. Inputs include the learner’s mastery vector, latent estimates (θ,α,ϕ\theta, \alpha, 
+\phiθ,α,ϕ), recent history (responses, hints, time trends), and contextual factors (e.g., time of 
+day, fatigue). This shared encoder ensures both policies operate on the same full student 
+context, maintaining coordination. 
+
+Training (Hierarchical RL Style) 
+
+Both policies are trained jointly using hierarchical reinforcement learning. Execution proceeds in 
+sequence: 
+
+1.​ Jump Policy (π_jump) chooses the LO (stay, skip, or backtrack).​
+ 
+
+
+
+2.​ Content Policy (π_content) samples a resource from that LO.​
+ 
+
+The total reward is decomposed into: 
+
+●​ r_content​: dense feedback (correctness, engagement, mastery).​
+ 
+
+●​ r_jump​: long-horizon feedback (efficiency, retention, safety).​
+ 
+
+A weighted combination of these components ensures both heads receive appropriate learning 
+signals despite their different horizons. Algorithms such as PPO can optimize multi-head outputs 
+with distinct action distributions. 
+
+ 
+
+Using two policies within a single agent ensures: 
+
+one head for fine-grained local resource selection, one for global curriculum movement.​
+shared encoder avoids bottlenecks and misalignment that would occur with two 
+independent agents.end-to-end training ensures both policies are optimized under a 
+unified reward framework. 
+
+ 
+
+ 
+So agent core is recommendation not to forget , additionally not alone sufficient , Incorporate the 
+adaptive skipping of mwps while recommending actions . 
+ ​
+Each topic is decomposed into multiple learning outcomes (LOs). Each LO contains a set of 
+questions stratified across several difficulty levels. Traditionally, a student must attempt all 
+questions under a given LO to achieve mastery.However, our system introduces adaptive 
+completion criteria,Students with higher latent ability may achieve mastery after attempting only 
+a subset of questions within an LO (e.g., a “genius” student might master an LO after solving 12 
+carefully selected questions out of 100).Students with moderate ability may require more 
+attempts  to reach mastery.The adaptive mechanism dynamically determines the number and 
+difficulty of questions presented based on observed performance, engagement, and inferred 
+latent parameters.​
+​
+The jump decision (whether to skip, and by how much) can indeed be treated as a policy 
+learned by the RL agent, rather than a fixed heuristic 
+ 
+
+Learned as a policy over “ jumps “ 
+
+
+
+Define jump size j as an action.​
+The agent chooses j given the current state (student mastery vector, latents, history 
+length, uncertainty).​
+The environment (student simulator + teacher) provides reward: if the jump was too 
+aggressive → more errors → lower reward; if the jump saved time without harming 
+mastery → higher reward. Over training, the agent learns how to skip, tuned to latent 
+profiles. 
+
+State: 
+
+Current mastery vector mmm.​
+Latent estimates (θ,α,ϕ,s,g,τ,h,η).​
+Uncertainty/entropy measure.​
+Step index (early vs late trajectory). 
+
+Action space:  // to decide ( continuous space ) 
+
+ 
+
+ 
+
+Reward: 
+
+Positive: faster mastery confirmation, reduced item count, higher engagement.​
+Negative: premature jumps leading to failure or low retention. 
+
+ 
+
+While initial experiments may use hand-crafted promotion thresholds, we ultimately treat 
+skipping as a learned policy. Specifically, the agent’s action space is extended to include 
+discrete jump actions corresponding to promotion across one or more difficulty tiers or directly to 
+the next LO. Rewards reflect both efficiency (fewer items attempted) and pedagogical 
+soundness (avoidance of premature advancement). This allows the agent to learn 
+context-sensitive skipping strategies that adapt dynamically to student ability, learning rate, and 
+uncertainty, rather than relying on static rules.​
+ 
+
+ 
+
+Next comes recommendation ​
+ 
+
+In our system, content recommendation is the core tutoring action. If that piece is weak, the rest 
+of the RL loop (jumping, mastery, teacher reward) collapses. 
+
+Robust Content Recommendation — Layers 
+
+
+
+// think about , next tab ​
+​
+we have the actual content now real life , open source right? we can map it to our hypothetical 
+learning map of topics , los . then in real life when we try to implement in a school , we just have 
+to map this already functional model's synthetic questionnaire (that is mapped to content) , to a 
+real life questionnaire​
+​
+
+ 
+Pipeline from synthetic → real content​
+​
+ Step 1: Content Layer (real resources) 
+
+We already have real, open-source content → videos, articles, textbooks, problem sets from the 
+internet.These get tagged to your learning map:​
+Topics (Algebra, Geometry, etc.)​
+Learning Outcomes (LOs: “can solve quadratic equations,” “can interpret slope”).​
+Synthetic Questionnaire (training phase) 
+
+In the synthetic environment, we used a questionnaire of items mapped to the same topics/LOs.​
+These were used to train the agent, simulate student mastery, and validate the pipeline.​
+ 
+
+Essentially, the questionnaire = controlled proxy environment.​
+Transition to Real School 
+
+In deployment, the questionnaire role doesn’t vanish — it just gets replaced or supplemented:​
+Your synthetic questionnaire (already mapped to topics/LOs) → replaced by real classroom 
+assessments (teacher-made or standardized).​
+These real assessments are still mapped to the same topics/LOs, so the model’s structure stays 
+intact.​
+ So the mapping chain is:​
+ Real Resources ↔ Topics/LOs ↔ Questionnaire Items (synthetic → real) 
+
+What This Achieves 
+
+The agent doesn’t care whether the “questionnaire item” came from your synthetic bank or from 
+a teacher’s exam sheet → it just sees:​
+Student attempted item (LO: X, topic: Y)​
+Student got outcome (correct/incorrect, confidence, time)​
+This makes  system plug-and-play in real schools. 
+
+
+
+The synthetic stage is where we generate a topic → LO → question pool structure. Each LO 
+has synthetic questions tagged by difficulty, discrimination, guess susceptibility, etc. These 
+"questions" are just placeholders (metadata + outcomes) used to train and debug the RL 
+pipeline. 
+
+In parallel real content preparation, we collect open-source materials (textbooks, Khan 
+Academy, YouTube EDU, CK-12, MIT OCW, etc.) and break them down into the same map: 
+topic → LO → resource pool. These resources are then tagged with metadata such as difficulty, 
+modality (video/reading/problem), estimated time, and prerequisites. 
+
+The bridge layer, which is the key move, ensures that the RL policy never directly “sees” 
+synthetic vs real content. It only sees the LO → resource mapping. In deployment, we replace 
+the synthetic question IDs with real resource IDs (a worksheet, video, or question from the 
+corpus). Essentially, the action space remains the same: pick LO + pick resource. The backing 
+material just changes. 
+
+When it comes to implementation in schools, once you go live, you plug in the real corpus 
+mapped to the LO graph. The already-trained RL policy outputs something like: “Recommend 
+LO-3, medium difficulty resource, type = diagnostic quiz.” Instead of serving synthetic 
+placeholder Q3.7, the system serves the real quiz aligned to LO-3, medium difficulty. Human 
+teachers can then audit, approve, or override those recommendations seamlessly. 
+
+In Step 2 — First Verification, we need to check whether we’ve lost anything critical. Synthetic 
+mapping included question-level metadata such as difficulty and slip/guess data, which may not 
+be available in real content. To fix this, we can estimate these from historical usage (IRT 
+models, crowd-sourced difficulty). Another concern is response modeling, where the synthetic 
+environment simulated RT, hints, etc. In real school data, we need logging infrastructure to track 
+timestamps, hint clicks, and dropout events. To address this, we need to build an event logger 
+before deployment. For cold-start probe design, instead of synthetic probe items, we can deliver 
+short real quizzes aligned to the same diagnostic slots. As a correction, we must build or borrow 
+an IRT-style calibration pipeline to tag real content with difficulty and discrimination. 
+
+When considering any contradictions between synthetic training and real deployment, it’s 
+important to note that in training, the policy optimizes on a simulator, while in deployment, 
+students are real. This creates a mismatch risk, but it is manageable. We pre-train the policy on 
+synthetic data, then fine-tune it online with real data. Additionally, we can use teacher 
+interventions as preference labels for RLHF-style fine-tuning. One possible issue arises when 
+real content includes multi-modality (e.g., video + quiz), while the synthetic stage assumed only 
+“question items.” To solve this, we define resource types abstractly in the synthetic stage (e.g., 
+“practice item,” “explanatory resource,” “review”) and later map them to actual content types. 
+
+Once the RL system is functional with synthetic questions, transitioning to real-life content is just 
+a matter of mapping the synthetic question IDs to real content IDs within the same topic → LO 
+graph. The agent’s action space doesn’t change. The key technical bridges include metadata 
+tagging of real content (difficulty, type, prerequisites, modality), implementing a logging 
+
+
+
+infrastructure to close the gap between the simulator and real data, using IRT or bandit methods 
+to estimate difficulty/discrimination of real items, and fine-tuning the synthetic-trained policy to 
+real student data through online RL and RLHF with teacher preferences. 
+
+ 
+
+ 
+
+Reward Design: Balancing Student 
+Signals and Teacher Shaping 
+
+Intrinsic Rewards Before Teacher Feedback 
+
+Even with the two-head agent (Jump Policy + Content Policy), the system already receives 
+intrinsic rewards from the environment. These rewards are generated by the student model and 
+reflect measurable outcomes of learning. 
+
+Examples include: 
+
+●​ Student performance rewards: +1 if the student answers correctly, −1 if wrong, 
+possibly scaled for speed, retention, or confidence.​
+ 
+
+●​ Curriculum efficiency rewards: positive if mastery progresses quickly, negative if 
+stagnation or regression occurs.​
+ 
+
+These environment-driven signals (R_student) correspond to dense rewards in reinforcement 
+learning. They capture short-horizon behavioral outcomes such as correctness and efficiency. 
+Importantly, the agent can already learn policies from these signals, but may converge to 
+suboptimal pedagogical strategies. For example, the system may over-recommend easy items 
+to maximize correctness, even though this hinders long-term learning. 
+
+ 
+
+Teacher Feedback as Reward Shaping 
+
+The role of the teacher is to provide extrinsic preference shaping beyond correctness. Unlike 
+the environment, which can only signal “was the answer right or wrong,” the teacher can encode 
+pedagogical quality. 
+
+Teacher feedback provides signals that correctness alone cannot capture: 
+
+
+
+●​ Appropriateness: A too-easy problem may yield +1 from the environment but −1 from 
+the teacher because it was pedagogically unhelpful.​
+ 
+
+●​ Long-horizon preferences: The teacher may prefer short-term struggle on a hard 
+question if it produces deeper learning benefits.​
+ 
+
+●​ Curriculum values: Coverage of skills, balance between breadth and depth, or 
+alignment with external goals.​
+ 
+
+In this sense, teacher feedback is orthogonal to correctness. It aligns the agent’s learning 
+process with educational values that are not directly measurable in the environment. 
+
+ 
+
+Shaping Both Policies, Not Just One 
+
+A critical design choice is that teacher shaping must apply to both the Jump Policy and the 
+Content Policy. 
+
+●​ Jump Policy (pi_jump): Teacher feedback can prevent premature promotion or 
+stagnation. For instance, a teacher may penalize skipping when reinforcement is 
+needed.​
+ 
+
+●​ Content Policy (pi_content): Teacher feedback can encourage diversity, penalize 
+repetitive content, or reward balanced coverage across modalities.​
+ 
+
+If teacher shaping applies to only one head, degeneracy occurs: 
+
+●​ Shaping only Content → the Jump Policy may collapse to always skip or never skip.​
+ 
+
+●​ Shaping only Jump → the Content Policy may collapse to always recommend safe or 
+trivial items.​
+ 
+
+Therefore, the design requires multi-level preference shaping, where teacher feedback 
+explicitly influences both levels of decision-making. This prevents imbalance and ensures that 
+both local (content selection) and global (curriculum progression) policies evolve coherently. 
+
+ 
+
+Reward Structure Formalization 
+
+We define the total reward as a weighted combination of intrinsic and extrinsic components: 
+
+
+
+R_total = R_student + alpha * R_teacher_jump + beta * R_teacher_content 
+
+●​ R_student: intrinsic environment-driven signals (correctness, mastery, efficiency).​
+ 
+
+●​ R_teacher_jump: extrinsic teacher feedback on curriculum pacing and promotion timing.​
+ 
+
+●​ R_teacher_content: extrinsic teacher feedback on the quality, appropriateness, and 
+diversity of resources.​
+ 
+
+●​ alpha, beta: tunable (or learnable) weights that control the influence of teacher shaping.​
+ 
+
+An extension is to make alpha and beta adaptive. For example, teacher feedback may carry 
+more weight during early training (to guide exploration) and decay later (to allow autonomous 
+optimization). This parallels annealing in reinforcement learning, where preference signals are 
+strong at the start and diminish as the policy stabilizes. 
+
+ 
+
+Implications for Adaptive Learning 
+
+This reward design integrates two perspectives: 
+
+1.​ Dense behavioral signals (R_student): measure what the student actually does in the 
+environment.​
+ 
+
+2.​ Preference shaping signals (R_teacher_jump, R_teacher_content): align policy 
+learning with pedagogical quality.​
+ 
+
+The combined structure ensures that the agent avoids trivial or degenerate solutions (such as 
+always recommending easy items or always advancing prematurely). Instead, it balances 
+short-term performance with long-term mastery, curriculum coverage, and teacher-defined 
+educational goals. 
+
+This dual-source reward model mirrors recent advances in reinforcement learning with human 
+feedback (RLHF), extended to the domain of education. By applying preference shaping at both 
+hierarchical levels of policy control, the system avoids collapse and learns strategies that are 
+simultaneously efficient, safe, and pedagogically sound. 
+
+●​  
+
+ 
+
+Redesigned Synthetic Teacher: Core Principles 
+
+
+
+1.​ Multi-Scale Reward Shaping: Operates at item, LO, and curriculum levels. 
+2.​ Uncertainty-Aware: Modulates feedback based on student latent uncertainty. 
+3.​ Fairness-Embedded: Includes subgroup-aware rules (e.g., for ELL, struggling 
+
+learners). 
+4.​ Explainable: Every reward component is traceable to a pedagogical rule. 
+5.​ Safe by Design: Enforces “3-tries flag” and prerequisite checks. 
+6.​ Transfer-Ready: Rewards calibrated to long-term retention and standardized 
+
+outcomes. 
+
+ 
+
+I. Phase 1: Pre-Training — Synthetic Teacher as Adaptive Rulebook + Reward Model 
+
+Bootstrapper 
+
+A. Structured Reward Generator 
+
+The teacher computes: 
+
+R_total = R_student + α(t) · R_jump + β(t) · R_content 
+
+R_student (Environment-Generated) 
+
+●​ +1 for correct, scaled by difficulty (d) and speed. 
+●​ −1 for incorrect, scaled by slip/guess awareness. 
+●​ +Δm for mastery gain. 
+●​ −τ(r) for time inefficiency. 
+
+R_jump (Curriculum Navigation Shaping) 
+
+rule signal 
+
+Prerequisite Safety −1if jump to ℓ with unmet prereq (m < 0.8orH(m) > 0.1) 
+
+
+
++1if jump lands inoptimal challenge zone(0.3 < m_pred < 
+ZPD Alignment 
+
+0.7) 
+
+Coverage +λ_covfor visiting new LOs;−λ_stalefor staying >10 steps 
+
+Retention Trigger +1forrevisit(ℓ)whenm [ℓ] < 0.7 ∧ ΔT > 1d 
+
+Overconfidence 
+−1ifm [ℓ] > 0.9but student fails retention probe 
+
+Penalty 
+
+R_content (Resource Quality Shaping) 
+
+rule signal 
+
+Difficulty Appropriateness −1if ` 
+
+Modality Diversity −λ_modif same modality >3x in a row 
+
+Type Balance −λ_typeif >3 practice without diagnostic 
+
+Scaffolding Awareness +1forworked exampleafter failure;−1for hint on easy item 
+
+Exposure Control −λ_exp · count(r)to prevent overuse 
+
+
+
+B. Adaptive Weighting 
+
+α(t) = α₀ / (1 + log(1 + data_count ))​
+β(t) = β₀ / (1 + log(1 + data_count )) 
+
+●​ High teacher influence early → fades as agent learns. 
+
+C. Preference Pair Generator (for RLHF Bootstrapping) 
+
+Generates synthetic preferences: 
+
+●​ Efficiency: Fewer items + same mastery → preferred. 
+●​ Safety: No premature jumps → preferred. 
+●​ Diversity: Mixed modalities → preferred. 
+
+Used to pre-train neural reward model R_ϕ(a, s). 
+
+D. Operational Safety Loop 
+
+●​ “3-Tries Flag”: After 3 failures on same LO → force review + log for human 
+review. 
+
+●​ Cold-Start Protocol: First 8–12 actions restricted to diagnostic probe set. 
+
+ 
+
+II. Phase 2: Real Deployment — Hybrid Teacher (Synthetic + Human) 
+
+A. Reward Model Augmentation (Offline RLHF) 
+
+●​ Human teachers label preference pairs: (τ₁ ≻ τ₂). 
+●​ Labels combined with synthetic data to fine-tune R_ϕ. 
+●​ Final reward:​
+
+R_total = R_student + R_ϕ(a, s) 
+
+B. Direct Intervention Layer (Online) 
+
+
+
+●​ Human overrides replace agent actions in sensitive cases: 
+●​ Repeated failure 
+●​ Non-syllabus content 
+●​ Inappropriate difficulty for subgroup 
+
+●​ Overrides logged as demonstration data → used for: 
+●​ Behavioral cloning 
+●​ Reward model retraining 
+●​ Action masking updates 
+
+C. Dynamic Rulebook 
+
+●​ Admins can edit rules in real time: 
+●​ Change mastery thresholds 
+●​ Add fairness constraints (e.g., “extra hints for ELL”) 
+●​ Update curriculum graph (e.g., new standards) 
+
+●​ Changes propagate instantly to reward logic. 
+
+D. Fairness & Bias Mitigation 
+
+●​ Subgroup-aware rewards: 
+●​ Higher hint tolerance for ELL students 
+●​ Slower progression for historically disadvantaged groups 
+
+●​ Disparity monitoring: Logs |m̄_group1 − m̄_group2| → triggers alert if > 
+threshold. 
+
+E. Calibration to Real Outcomes 
+
+●​ Proxy alignment term:​
+r_proxy = λ_proxy · (exam_score − ŝ )​
+where ŝ  = predicted score from m  
+
+●​ Ensures synthetic rewards correlate with real test gains. 
+
+ 
+
+ 
+
+
+
+Earlier Thought  Current thoughts 
+
+Fixed mastery threshold 
+Dynamic thresholdbased onθ̂ᵢ,α̂ᵢ, subgroup 
+
+(0.8) 
+
+Static reward weights Adaptive weightsbased on data count & uncertainty 
+
+No fairness logic Embedded fairness rulesper subgroup 
+
+No long-term signal Retention & exam alignmentviar_proxy,r_ret 
+
+Explainable reward traces(e.g., “penalized for skipping prereq 
+Opaque rewards 
+
+LO5”) 
+
+No human integration Two-tier human loop 
+
+ 
+
+ 
+
+Environment: Student Simulators (4 Schools) 
+
+●​ State: Student latent vector​
+ψᵢ = [θᵢ, αᵢ, ϕᵢ, sᵢ, gᵢ, τᵢ, hᵢ]​
+drawn from environment-specific hierarchical priors (e.g., θᵢ ~ Beta(5,3) for 
+EnvA). 
+
+●​ State Evolution:​
+After action a = (j, r) (jump + resource), the student’s mastery and 
+observations evolve stochastically: 
+
+●​ Mastery Update (per LO ℓ): 
+●​ mᵢ,ℓ(t+1) = 
+
+
+
+{ mᵢ,ℓ(t) + αᵢ·(1 − mᵢ,ℓ(t))·γ_d   if correct, 
+
+ mᵢ,ℓ(t) − λ·mᵢ,ℓ(t)                if incorrect 
+
+} 
+
+●​ Inter-Session Decay:​
+mᵢ,ℓ(t+ΔT) = mᵢ,ℓ(t) · (1 − ϕᵢ)^ΔT 
+
+●​ Observation Model (probability of correct response):​
+p(y=1 | s , a ) = (1 − sᵢ − τᵢ(t))·p_know + gᵢ·(1 − p_know)​
+where p_know = mᵢ,ℓ(t)·(1 − diff_penalty(d)) adjusted by θᵢ. 
+
+This defines the transition kernel:​
+p(s ₊₁ | s , a ) = p(ψᵢ, m ₊₁, h ₊₁ | ψᵢ, m , h , a )​
+— fully determined by the cognitive model. 
+
+ 
+
+2. Agent: Two-Policy Recommender 
+
+●​ Input: State s  = [m , ψ̂ᵢ, H(ψᵢ), h , c , x ] 
+●​ Shared Encoder: z  = ϕ(s ) 
+●​ Policy Heads: 
+
+●​ Jump Policy: π_jump(j | z ) → selects j ∈ {stay, backtrack, 
+revisit(ℓ), goto(ℓ), group(ℓ), NULL} 
+
+●​ Content Policy: π_content(r | z , ℓ*) → selects r ∈ ℛ_ℓ ∪ ℳ 
+●​ Action: a  = (j, r) 
+
+ 
+
+3. Teacher: Synthetic Reward Model 
+
+
+
+●​ Reward Decomposition:​
+R_total(t) = R_student(t) + α·R_teacher_jump(t) + 
+β·R_teacher_content(t) 
+
+●​ Components: 
+●​ R_student:​
+
+= y ·(1−g ̃) − (1−y )·(1+s ̃) + λ_m·Δm  − λ_e·τ(r )​
+(dense, environment-generated) 
+
+●​ R_teacher_jump:​
+= −1[unsafe jump] + 1[spaced revisit] − λ_v·|v |​
+(pedagogical shaping of progression) 
+
+●​ R_teacher_content:​
+= −1[|δ(r,i)| > 1] − λ_mod·1[mod switch] + 
+λ_meta·1[worked_example after fail]​
+(pedagogical shaping of resource quality) 
+
+●​ Safety Rule:​
+If student accumulates 8 incorrect responses in the questionnaire, flag instructor. 
+
+ 
+
+4. Training & Transfer 
+
+●​ Pre-Training: Agent trains on 4 synthetic environments (40k students total) via 
+Masked Deep Q / PPO. 
+
+●​ Transfer to Real World: 
+●​ Synthetic questionnaire (64k items) ↔ Real open-source content (Khan, 
+
+CK-12, etc.)​
+via shared topic → LO graph. 
+
+●​ Action space unchanged; only resource IDs swap. 
+●​ Human-in-the-loop: Teacher overrides and preference labels enable RLHF 
+
+fine-tuning.
