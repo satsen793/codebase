@@ -182,7 +182,7 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
             })
             agent.store(state_vec, action_idx, shaped_reward, next_state_vec, done)
             agent.update()
-            # Log trajectory step
+            # Log trajectory step before break
             trajectory_log.append([
                 env_id,
                 ep,
