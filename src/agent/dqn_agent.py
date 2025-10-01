@@ -52,28 +52,6 @@ class DQNAgent:
     def store(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-    def update(self):
-        if len(self.memory) < self.batch_size:
-            return
-        batch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
-    import numpy as np
-    states = torch.FloatTensor(np.array(states)).to(self.device)
-        actions = torch.LongTensor(actions).unsqueeze(1).to(self.device)
-        rewards = torch.FloatTensor(rewards).unsqueeze(1).to(self.device)
-    next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
-        dones = torch.FloatTensor(dones).unsqueeze(1).to(self.device)
-        q_values = self.q_net(states).gather(1, actions)
-        with torch.no_grad():
-            next_q = self.target_net(next_states).max(1)[0].unsqueeze(1)
-            target = rewards + self.gamma * next_q * (1 - dones)
-        loss = nn.MSELoss()(q_values, target)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        # Epsilon decay
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
 
     def update(self):
         if len(self.memory) < self.batch_size:
