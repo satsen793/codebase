@@ -28,6 +28,10 @@ num_episodes = 10  # For demo; increase for real training
 max_steps = 50
 results_log = []
 
+# For detailed per-step trajectory logging
+trajectory_log = []
+trajectory_log_header = ['env_id', 'episode', 'step', 'student_id', 'state', 'action_idx', 'jump_action', 'content_action', 'reward', 'next_state', 'done', 'info']
+
 for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
     print(f"Training in {env_id}")
     student_latents, curriculum_csv, resource_map, question_bank = load_env_data(env_id)
@@ -58,6 +62,10 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
     for ep in range(num_episodes):
         state = env.reset()
         total_reward = 0
+        # Try to extract student_id from env or state if available
+        student_id = getattr(env, 'current_student_id', None)
+        if student_id is None and isinstance(state, dict):
+            student_id = state.get('student_id', None)
         for step in range(max_steps):
             # Build state vector
             state_vec = encoder.encode({
@@ -84,6 +92,21 @@ for env_id in ['SchoolA', 'SchoolB', 'SchoolC', 'SchoolD']:
             })
             agent.store(state_vec, action_idx, shaped_reward, next_state_vec, done)
             agent.update()
+            # Log trajectory step
+            trajectory_log.append([
+                env_id,
+                ep,
+                step,
+                student_id,
+                state_vec.tolist(),
+                action_idx,
+                jump_action,
+                content_action,
+                shaped_reward,
+                next_state_vec.tolist(),
+                done,
+                info
+            ])
             total_reward += shaped_reward
             state = next_state
             if done:
@@ -98,3 +121,10 @@ with open('csv/dqn_results.csv', 'w', newline='') as f:
     writer.writerow(['env_id', 'episode', 'total_reward'])
     writer.writerows(results_log)
 print("Training complete. Results saved to csv/dqn_results.csv")
+
+# Log detailed student trajectories to CSV
+with open('csv/rl_student_trajectories.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(trajectory_log_header)
+    writer.writerows(trajectory_log)
+print("Detailed trajectories saved to csv/rl_student_trajectories.csv")
