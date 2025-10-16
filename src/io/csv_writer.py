@@ -3,9 +3,9 @@ import os
 from datetime import datetime, timedelta
 import random
 
-# Simulate student interaction logs (e.g., for RL training)
+                                                           
 NUM_STUDENTS = 10000
-NUM_INTERACTIONS = 100000  # Large log
+NUM_INTERACTIONS = 100000             
 
 INTERACTIONS_CSV = os.path.join(os.path.dirname(__file__), '../../csv/student_interactions.csv')
 

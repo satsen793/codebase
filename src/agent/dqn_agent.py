@@ -1,5 +1,5 @@
-# dqn_agent.py
-# Deep Q-Network agent for RL
+              
+                             
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -84,7 +84,7 @@ class TwoHeadDQNAgent:
         rewards = torch.FloatTensor(rewards).unsqueeze(1).to(self.device)
         next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
         dones = torch.FloatTensor(dones).unsqueeze(1).to(self.device)
-        # Update jump Q-network
+                               
         jump_q_values = self.jump_q_net(states).gather(1, jump_actions)
         with torch.no_grad():
             next_jump_q = self.jump_target_net(next_states).max(1)[0].unsqueeze(1)
@@ -93,7 +93,7 @@ class TwoHeadDQNAgent:
         self.jump_optimizer.zero_grad()
         jump_loss.backward()
         self.jump_optimizer.step()
-        # Update content Q-network
+                                  
         content_q_values = self.content_q_net(states).gather(1, content_actions)
         with torch.no_grad():
             next_content_q = self.content_target_net(next_states).max(1)[0].unsqueeze(1)
@@ -102,7 +102,7 @@ class TwoHeadDQNAgent:
         self.content_optimizer.zero_grad()
         content_loss.backward()
         self.content_optimizer.step()
-        # Epsilon decay
+                       
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
@@ -127,7 +127,7 @@ class DQNAgent:
 
     def select_action(self, state, mask=None):
         if np.random.rand() < self.epsilon:
-            # Masked random action
+                                  
             if mask is not None:
                 available = [i for i, m in enumerate(mask) if m]
                 if not available:

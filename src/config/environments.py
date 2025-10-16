@@ -1,7 +1,7 @@
 import csv
 import os
 
-# Four environments, each with different latent parameter priors
+                                                                
 ENVIRONMENTS = [
     {
         'env_id': 'SchoolA',

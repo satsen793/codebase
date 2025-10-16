@@ -2,7 +2,7 @@ import csv
 import random
 import os
 
-# Constants for questionnaire generation
+                                        
 NUM_TOPICS = 200
 NUM_LOS = 10
 NUM_DIFFICULTIES = 4

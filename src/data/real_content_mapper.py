@@ -2,7 +2,7 @@ import csv
 import os
 import random
 
-# Simulate mapping of synthetic question IDs to real content IDs
+                                                                
 NUM_TOPICS = 200
 NUM_LOS = 10
 NUM_DIFFICULTIES = 4

@@ -2,7 +2,7 @@ import csv
 import random
 import os
 
-# Constants for student generation
+                                  
 NUM_STUDENTS = 10000
 LATENT_PARAMS = ['theta', 'alpha', 'phi', 's', 'g', 'tau', 'h']
 
@@ -11,15 +11,15 @@ STUDENTS_CSV = os.path.join(os.path.dirname(__file__), '../../csv/students.csv')
 os.makedirs(os.path.dirname(STUDENTS_CSV), exist_ok=True)
 
 def sample_latent_params():
-    # Example: sample from uniform or beta distributions for each parameter
+                                                                           
     return [
-        round(random.betavariate(5, 3), 3),   # theta
-        round(random.betavariate(2, 5), 3),   # alpha
-        round(random.betavariate(2, 8), 3),   # phi
-        round(random.uniform(0, 0.2), 3),     # s (slip)
-        round(random.uniform(0, 0.2), 3),     # g (guess)
-        round(random.uniform(0.5, 2.0), 3),   # tau (time/fatigue)
-        round(random.uniform(0, 1), 3)        # h (hint usage)
+        round(random.betavariate(5, 3), 3),          
+        round(random.betavariate(2, 5), 3),          
+        round(random.betavariate(2, 8), 3),        
+        round(random.uniform(0, 0.2), 3),               
+        round(random.uniform(0, 0.2), 3),                
+        round(random.uniform(0.5, 2.0), 3),                       
+        round(random.uniform(0, 1), 3)                        
     ]
 
 def generate_students():

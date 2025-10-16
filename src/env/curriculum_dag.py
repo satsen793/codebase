@@ -1,5 +1,5 @@
-# curriculum_dag.py
-# Handles DAG unlock logic for curriculum
+                   
+                                         
 import networkx as nx
 
 class CurriculumDAG:
@@ -21,7 +21,7 @@ class CurriculumDAG:
                 self.lo_prereqs[lo_id] = prereqs
 
     def unlocked(self, mastery_dict, threshold=0.8):
-        # Returns set of unlocked LO ids given current mastery
+                                                              
         unlocked = set()
         for lo, prereqs in self.lo_prereqs.items():
             if all(mastery_dict.get(p, 0) >= threshold for p in prereqs):
